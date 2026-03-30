@@ -23,7 +23,7 @@ class LinearRegression:
         return np.mean(np.abs(y - y_pred))
     
     def rmse(self, y_pred, y):
-        return np.sqrt(self.mse(y - y_pred))
+        return np.sqrt(self.mse(y_pred, y))
     
     def grad(self, X, y_pred, y):
         metric = self.metric
