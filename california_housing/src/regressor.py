@@ -2,11 +2,11 @@ import numpy as np
 
 class Regressor:
     def __init__(self,
-                 learning_rate=1e-3,
-                 epochs = 500,
+                 learning_rate=8e-4,
+                 epochs = 2000,
                  metric = 'mse',
                  depth = 4,
-                 width = 32,
+                 width = 64,
                  activation_func = 'relu',
                  loss_func = 'mse',
                  weight_decay = 1e-5,
@@ -34,14 +34,17 @@ class Regressor:
     def _init_weights(self):
         self.weights = []
         self.bias = []
+        scale = np.sqrt(2.0 / 8)
         width = self.width
-        self.weights.append(self.rng.normal(size=(8, width)))
-        self.bias.append(self.rng.normal(size=(1, width)))
+        self.weights.append(self.rng.normal(0.0, scale, size=(8, self.width)))
+        self.bias.append(np.zeros((1, self.width)))
         for _ in range(self.depth - 2):
-            self.weights.append(self.rng.normal(size=(width, width)))
-            self.bias.append(self.rng.normal(size=(1, width)))
-        self.weights.append(self.rng.normal(size=(width, 1)))
-        self.bias.append(self.rng.normal(size=(1, 1)))
+            scale = np.sqrt(2.0 / self.width)
+            self.weights.append(self.rng.normal(0.0, scale, size=(self.width, self.width)))
+            self.bias.append(np.zeros((1, self.width)))
+        scale = np.sqrt(1.0 / self.width)
+        self.weights.append(self.rng.normal(0.0, scale, size=(self.width, 1)))
+        self.bias.append(np.zeros((1, 1)))
         return self
     
     def relu(self, x):
@@ -143,10 +146,14 @@ class Regressor:
                 z_prev = self.cache[i-1][0]
                 delta = delta @ self.weights[i].T * self.activation_grad(z_prev)
 
+
     def fit(self, X_train, y_train):
         self._init_weights()
         self._set_activation()
         self._set_loss()
+
+        X_train = np.asarray(X_train, dtype=np.float32)
+        y_train = np.asarray(y_train, dtype=np.float32).reshape(-1, 1)
 
         self.history = []
 
