@@ -27,6 +27,7 @@ class Regressor:
         self.loss = None
         self.grad = None
         self.cache = None
+        self.history = None
 
         self.rng = np.random.default_rng(random_seed)
 
@@ -91,13 +92,10 @@ class Regressor:
         name = self.loss_func
         if name == 'mse':
             self.loss = self.mse
-            self.grad = self.mse_grad
         elif name == 'mae':
             self.loss = self.mae
-            self.grad = self.mae_grad
         else:
             self.loss = self.rmse
-            self.grad = self.rmse_grad
     
     def _output_delta(self, output, y):
         n = output.shape[0]
@@ -137,7 +135,7 @@ class Regressor:
 
             dw = a_prev.T @ delta
             db = np.sum(delta, axis=0, keepdims=True)
-            
+
             self.weights[i] = (1 - wd * lr) * w - lr * dw
             self.bias[i] =  (1 - wd * lr) * b - lr * db
 
@@ -145,9 +143,30 @@ class Regressor:
                 z_prev = self.cache[i-1][0]
                 delta = delta @ self.weights[i].T * self.activation_grad(z_prev)
 
+    def fit(self, X_train, y_train):
+        self._init_weights()
+        self._set_activation()
+        self._set_loss()
 
-    def fit(self, X_train, y_train, X_val=None, y_val=None):
-        return 0
+        self.history = []
+
+        for epoch in range(self.epochs):
+            output = self.forward(X_train)
+
+            loss = self.loss(y_train, output)
+            self.history.append(loss)
+
+            self.backward(X_train, y_train, output)
+
+            if epoch % 50 == 0:
+                print("=" * 8)
+                print('Epoch', epoch, '\nLoss', loss)
+
+        return self.history
     
     def predict(self, X):
-        return 0
+        calc = X
+        for i in range(len(self.weights)):
+            z = calc @ self.weights[i] + self.bias[i]
+            calc = self.activation(z)
+        return calc
